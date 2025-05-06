@@ -97,6 +97,37 @@ for (let i = 0; i < formInputs.length; i++) {
 
 
 
+// Portfolio modal variables
+const portfolioItems = document.querySelectorAll(".project-item > a");
+const portfolioModalContainer = document.querySelector("[data-portfolio-modal-container]");
+const portfolioModalCloseBtn = document.querySelector("[data-portfolio-modal-close-btn]");
+const portfolioOverlay = document.querySelector("[data-portfolio-overlay]");
+const portfolioModalImg = document.querySelector("[data-portfolio-modal-img]");
+
+// Portfolio modal toggle function
+const portfolioModalFunc = function () {
+  portfolioModalContainer.classList.toggle("active");
+  portfolioOverlay.classList.toggle("active");
+}
+
+// Add click event to all portfolio items
+for (let i = 0; i < portfolioItems.length; i++) {
+  portfolioItems[i].addEventListener("click", function (event) {
+
+    event.preventDefault(); // Prevent default link behavior
+    const imgSrc = this.querySelector('.project-img img').getAttribute('src');
+    portfolioModalImg.setAttribute('src', imgSrc);
+    portfolioModalFunc(); // Open the portfolio modal
+
+  });
+}
+
+// Add click event to portfolio modal close button and overlay
+portfolioModalCloseBtn.addEventListener("click", portfolioModalFunc);
+portfolioOverlay.addEventListener("click", portfolioModalFunc);
+
+
+
 // page navigation variables
 const navigationLinks = document.querySelectorAll("[data-nav-link]");
 const pages = document.querySelectorAll("[data-page]");

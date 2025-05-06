@@ -1897,3 +1897,55 @@ textarea.form-input::-webkit-resizer { display: none; }
   .timeline-text { max-width: 700px; }
 
 }
+
+
+/**
+ * Portfolio Modal Styles
+ */
+
+.portfolio-modal-content {
+  background: var(--eerie-black-2);
+  position: relative;
+  padding: 20px;
+  margin: 15px 12px;
+  border: 1px solid var(--jet);
+  border-radius: 14px;
+  box-shadow: var(--shadow-5);
+  transform: scale(1.2);
+  opacity: 0;
+  transition: var(--transition-1);
+  z-index: 2;
+  max-width: 900px; /* Adjust max width as needed */
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-container.active .portfolio-modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.portfolio-modal-content .modal-img-wrapper {
+  line-height: 0; /* Remove potential space below image */
+}
+
+.portfolio-modal-content .modal-img-wrapper img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(90vh - 80px); /* Adjust based on padding/button size */
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Reusing existing close button style, just ensuring it's positioned correctly */
+.portfolio-modal-content .modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 3; 
+}
