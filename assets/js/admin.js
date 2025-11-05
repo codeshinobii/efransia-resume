@@ -467,8 +467,13 @@ class AdminDashboard {
       </div>
       <div class="item-card-body">
         <div class="form-group">
+          <label>Image Upload</label>
+          <input type="file" class="form-control" accept="image/*" onchange="admin.handleClientImageUpload(${client.id}, this)" style="padding: 0.5rem;">
+          <small style="color: var(--light-gray-70); margin-top: 0.5rem; display: block;">Or enter image URL below</small>
+        </div>
+        <div class="form-group">
           <label>Image URL</label>
-          <input type="text" class="form-control" value="${client.image}" oninput="admin.updateClient(${client.id}, 'image', this.value)">
+          <input type="text" class="form-control" value="${client.image}" oninput="admin.updateClient(${client.id}, 'image', this.value)" placeholder="./assets/images/logo001.jpeg">
           <img src="${client.image}" class="image-preview" alt="Preview" onerror="this.style.display='none'">
         </div>
         <div class="form-group">
@@ -478,6 +483,47 @@ class AdminDashboard {
       </div>
     `;
     return div;
+  }
+
+  // Handle client image upload
+  async handleClientImageUpload(clientId, fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Please select an image file', 'error');
+      return;
+    }
+
+    // Show loading
+    this.showToast('Uploading image...', 'info');
+
+    try {
+      // Try to save file via server first (if available)
+      const filePath = await this.saveImageFile(file, `client-${clientId}-${file.name}`);
+      
+      if (filePath) {
+        // Server saved the file - use the file path
+        this.updateClient(clientId, 'image', filePath);
+        this.showToast('Image uploaded and saved to server!', 'success');
+      } else {
+        // No server - convert to base64 for localStorage
+        const base64 = await this.fileToBase64(file);
+        this.updateClient(clientId, 'image', base64);
+        this.showToast('Image uploaded! (saved as base64)', 'success');
+      }
+      
+      // Update preview
+      const preview = fileInput.closest('.item-card-body').querySelector('.image-preview');
+      if (preview) {
+        const imageSrc = filePath || await this.fileToBase64(file);
+        preview.src = imageSrc;
+        preview.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      this.showToast('Error uploading image', 'error');
+    }
   }
 
   addClient() {
@@ -828,13 +874,94 @@ class AdminDashboard {
           </select>
         </div>
         <div class="form-group">
+          <label>Image Upload</label>
+          <input type="file" class="form-control" accept="image/*" onchange="admin.handlePortfolioImageUpload(${item.id}, this)" style="padding: 0.5rem;">
+          <small style="color: var(--light-gray-70); margin-top: 0.5rem; display: block;">Or enter image URL below</small>
+        </div>
+        <div class="form-group">
           <label>Image URL</label>
-          <input type="text" class="form-control" value="${item.image}" oninput="admin.updatePortfolioItem(${item.id}, 'image', this.value)">
+          <input type="text" class="form-control" value="${item.image}" oninput="admin.updatePortfolioItem(${item.id}, 'image', this.value)" placeholder="./assets/images/port-1.jpeg">
           <img src="${item.image}" class="image-preview" alt="Preview" onerror="this.style.display='none'">
         </div>
       </div>
     `;
     return div;
+  }
+
+  // Handle portfolio image upload
+  async handlePortfolioImageUpload(itemId, fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Please select an image file', 'error');
+      return;
+    }
+
+    // Show loading
+    this.showToast('Uploading image...', 'info');
+
+    try {
+      // Try to save file via server first (if available)
+      const filePath = await this.saveImageFile(file, `portfolio-${itemId}-${file.name}`);
+      
+      if (filePath) {
+        // Server saved the file - use the file path
+        this.updatePortfolioItem(itemId, 'image', filePath);
+        this.showToast('Image uploaded and saved to server!', 'success');
+      } else {
+        // No server - convert to base64 for localStorage
+        const base64 = await this.fileToBase64(file);
+        this.updatePortfolioItem(itemId, 'image', base64);
+        this.showToast('Image uploaded! (saved as base64)', 'success');
+      }
+      
+      // Update preview
+      const preview = fileInput.closest('.item-card-body').querySelector('.image-preview');
+      if (preview) {
+        const imageSrc = filePath || await this.fileToBase64(file);
+        preview.src = imageSrc;
+        preview.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      this.showToast('Error uploading image', 'error');
+    }
+  }
+
+  // Convert file to base64
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Save image file via server if available
+  async saveImageFile(file, filename) {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('filename', filename);
+
+      const response = await fetch('http://localhost:3001/api/upload-image', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Image saved to server:', result.path);
+        // Update the image URL to use the saved file path instead of base64
+        return result.path;
+      }
+    } catch (error) {
+      // Server not running - that's okay, base64 is stored in localStorage
+      console.log('Server not available, using base64 storage');
+    }
+    return null;
   }
 
   addPortfolioItem() {

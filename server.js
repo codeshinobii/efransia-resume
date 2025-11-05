@@ -2,6 +2,7 @@
 /**
  * Simple Local Server for Admin Dashboard
  * Automatically updates website-data.json when admin saves changes
+ * Also handles image uploads
  * 
  * Usage: node server.js
  * Then open admin.html and make changes - they'll auto-save!
@@ -10,9 +11,16 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { URL } = require('url');
 
 const PORT = 3001;
 const JSON_FILE = path.join(__dirname, 'website-data.json');
+const IMAGES_DIR = path.join(__dirname, 'assets', 'images');
+
+// Ensure images directory exists
+if (!fs.existsSync(IMAGES_DIR)) {
+  fs.mkdirSync(IMAGES_DIR, { recursive: true });
+}
 
 // Enable CORS for local development
 const corsHeaders = {
@@ -22,6 +30,38 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
+const corsHeadersFile = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json'
+};
+
+// Parse multipart form data
+function parseMultipartFormData(body, boundary) {
+  const parts = body.split(`--${boundary}`);
+  const formData = {};
+  
+  for (const part of parts) {
+    if (!part || part === '--' || part.trim() === '') continue;
+    
+    const headerEnd = part.indexOf('\r\n\r\n');
+    if (headerEnd === -1) continue;
+    
+    const headers = part.substring(0, headerEnd);
+    const content = part.substring(headerEnd + 4);
+    
+    // Extract field name from Content-Disposition header
+    const nameMatch = headers.match(/name="([^"]+)"/);
+    if (nameMatch) {
+      const fieldName = nameMatch[1];
+      formData[fieldName] = content.trim();
+    }
+  }
+  
+  return formData;
+}
+
 const server = http.createServer((req, res) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -30,8 +70,91 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Only handle POST requests
-  if (req.method === 'POST' && req.url === '/api/save') {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  
+  // Handle image upload
+  if (req.method === 'POST' && url.pathname === '/api/upload-image') {
+    let body = Buffer.alloc(0);
+    
+    req.on('data', chunk => {
+      body = Buffer.concat([body, chunk]);
+    });
+    
+    req.on('end', () => {
+      try {
+        const contentType = req.headers['content-type'] || '';
+        const boundaryMatch = contentType.match(/boundary=(.+)/);
+        
+        if (!boundaryMatch) {
+          res.writeHead(400, corsHeadersFile);
+          res.end(JSON.stringify({ error: 'Invalid content type' }));
+          return;
+        }
+        
+        const boundary = `--${boundaryMatch[1]}`;
+        const parts = body.toString('binary').split(boundary);
+        let imageBuffer = null;
+        let filename = null;
+        
+        for (const part of parts) {
+          if (!part || part.trim() === '' || part === '--') continue;
+          
+          const headerEnd = part.indexOf('\r\n\r\n');
+          if (headerEnd === -1) continue;
+          
+          const headers = part.substring(0, headerEnd);
+          const content = part.substring(headerEnd + 4);
+          
+          if (headers.includes('Content-Disposition')) {
+            const nameMatch = headers.match(/name="([^"]+)"/);
+            const filenameMatch = headers.match(/filename="([^"]+)"/);
+            
+            if (filenameMatch) {
+              filename = filenameMatch[1];
+            }
+            if (nameMatch && nameMatch[1] === 'image') {
+              // Extract binary data
+              const binaryContent = content.substring(0, content.lastIndexOf('\r\n'));
+              imageBuffer = Buffer.from(binaryContent, 'binary');
+            }
+          }
+        }
+        
+        if (!imageBuffer) {
+          res.writeHead(400, corsHeadersFile);
+          res.end(JSON.stringify({ error: 'No image data received' }));
+          return;
+        }
+        
+        // Generate safe filename
+        const safeFilename = filename 
+          ? filename.replace(/[^a-zA-Z0-9.-]/g, '_')
+          : `upload-${Date.now()}.jpg`;
+        const imagePath = path.join(IMAGES_DIR, safeFilename);
+        
+        // Save image
+        fs.writeFileSync(imagePath, imageBuffer);
+        
+        const relativePath = `./assets/images/${safeFilename}`;
+        console.log(`✅ Image saved: ${relativePath}`);
+        
+        res.writeHead(200, corsHeadersFile);
+        res.end(JSON.stringify({ 
+          success: true, 
+          path: relativePath,
+          message: 'Image uploaded successfully'
+        }));
+      } catch (error) {
+        console.error('❌ Error uploading image:', error);
+        res.writeHead(500, corsHeadersFile);
+        res.end(JSON.stringify({ error: error.message }));
+      }
+    });
+    return;
+  }
+
+  // Handle data save
+  if (req.method === 'POST' && url.pathname === '/api/save') {
     let body = '';
     
     req.on('data', chunk => {
@@ -66,15 +189,17 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: error.message }));
       }
     });
-  } else {
-    res.writeHead(404, corsHeaders);
-    res.end(JSON.stringify({ error: 'Not found' }));
+    return;
   }
+  
+  res.writeHead(404, corsHeaders);
+  res.end(JSON.stringify({ error: 'Not found' }));
 });
 
 server.listen(PORT, () => {
   console.log(`🚀 Admin Dashboard Server running on http://localhost:${PORT}`);
   console.log(`📝 Updates will be saved to: ${JSON_FILE}`);
+  console.log(`🖼️  Images will be saved to: ${IMAGES_DIR}`);
   console.log(`\n💡 Keep this server running while using the admin dashboard`);
   console.log(`   Press Ctrl+C to stop\n`);
 });
