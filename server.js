@@ -6,6 +6,7 @@
  * 
  * Usage: node server.js
  * Then open admin.html and make changes - they'll auto-save!
+ * Access admin at: http://localhost:3001/admin
  */
 
 const http = require('http');
@@ -16,10 +17,27 @@ const { URL } = require('url');
 const PORT = 3001;
 const JSON_FILE = path.join(__dirname, 'website-data.json');
 const IMAGES_DIR = path.join(__dirname, 'assets', 'images');
+const ADMIN_DIR = path.join(__dirname, 'admin');
 
-// Ensure images directory exists
+// Ensure directories exist
 if (!fs.existsSync(IMAGES_DIR)) {
   fs.mkdirSync(IMAGES_DIR, { recursive: true });
+}
+
+// Serve static files
+function serveStaticFile(filePath, res, contentType) {
+  if (!fs.existsSync(filePath)) {
+    res.writeHead(404, corsHeaders);
+    res.end(JSON.stringify({ error: 'File not found' }));
+    return;
+  }
+  
+  const content = fs.readFileSync(filePath);
+  res.writeHead(200, { 
+    'Content-Type': contentType,
+    ...corsHeaders 
+  });
+  res.end(content);
 }
 
 // Enable CORS for local development
@@ -71,6 +89,71 @@ const server = http.createServer((req, res) => {
   }
 
   const url = new URL(req.url, `http://${req.headers.host}`);
+  
+  // Serve admin page at /admin
+  if (req.method === 'GET' && (url.pathname === '/admin' || url.pathname === '/admin/')) {
+    const adminPath = path.join(ADMIN_DIR, 'index.html');
+    if (fs.existsSync(adminPath)) {
+      const content = fs.readFileSync(adminPath);
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+      return;
+    }
+  }
+
+  // Serve static assets (CSS, JS) from admin directory
+  if (req.method === 'GET' && url.pathname.startsWith('/admin/assets/')) {
+    const assetPath = path.join(__dirname, url.pathname.replace('/admin', ''));
+    const ext = path.extname(assetPath);
+    const contentType = {
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon'
+    }[ext] || 'application/octet-stream';
+    
+    if (fs.existsSync(assetPath)) {
+      const content = fs.readFileSync(assetPath);
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+      return;
+    }
+  }
+
+  // Serve other static assets (root level)
+  if (req.method === 'GET' && url.pathname.startsWith('/assets/')) {
+    const assetPath = path.join(__dirname, url.pathname);
+    const ext = path.extname(assetPath);
+    const contentType = {
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon'
+    }[ext] || 'application/octet-stream';
+    
+    if (fs.existsSync(assetPath)) {
+      const content = fs.readFileSync(assetPath);
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+      return;
+    }
+  }
+
+  // Serve website-data.json
+  if (req.method === 'GET' && url.pathname === '/website-data.json') {
+    if (fs.existsSync(JSON_FILE)) {
+      const content = fs.readFileSync(JSON_FILE);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(content);
+      return;
+    }
+  }
   
   // Handle image upload
   if (req.method === 'POST' && url.pathname === '/api/upload-image') {
@@ -200,7 +283,8 @@ server.listen(PORT, () => {
   console.log(`🚀 Admin Dashboard Server running on http://localhost:${PORT}`);
   console.log(`📝 Updates will be saved to: ${JSON_FILE}`);
   console.log(`🖼️  Images will be saved to: ${IMAGES_DIR}`);
-  console.log(`\n💡 Keep this server running while using the admin dashboard`);
+  console.log(`\n💡 Access admin at: http://localhost:${PORT}/admin`);
+  console.log(`   Keep this server running while using the admin dashboard`);
   console.log(`   Press Ctrl+C to stop\n`);
 });
 

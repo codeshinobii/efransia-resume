@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - CMS</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <!-- Admin CSS -->
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-content">
+        <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="preview-btn">
+            <i class="fas fa-eye"></i> Preview Site
+          </button>
+          <button class="btn btn-primary" id="save-all-btn">
+            <i class="fas fa-save"></i> Save All Changes
+          </button>
+          <button class="btn btn-danger" id="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="#personal-info" class="nav-link active" data-section="personal-info">
+            <i class="fas fa-user"></i> Personal Info
+          </a></li>
+          <li><a href="#about" class="nav-link" data-section="about">
+            <i class="fas fa-info-circle"></i> About Section
+          </a></li>
+          <li><a href="#services" class="nav-link" data-section="services">
+            <i class="fas fa-briefcase"></i> Services
+          </a></li>
+          <li><a href="#clients" class="nav-link" data-section="clients">
+            <i class="fas fa-building"></i> Clients
+          </a></li>
+          <li><a href="#resume" class="nav-link" data-section="resume">
+            <i class="fas fa-file-alt"></i> Resume
+          </a></li>
+          <li><a href="#portfolio" class="nav-link" data-section="portfolio">
+            <i class="fas fa-images"></i> Portfolio
+          </a></li>
+          <li><a href="#contact" class="nav-link" data-section="contact">
+            <i class="fas fa-envelope"></i> Contact
+          </a></li>
+          <li><a href="#settings" class="nav-link" data-section="settings">
+            <i class="fas fa-cog"></i> Settings
+          </a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Personal Info Section -->
+      <section id="personal-info" class="admin-section active">
+        <div class="section-header">
+          <h2><i class="fas fa-user"></i> Personal Information</h2>
+          <p>Manage your profile information displayed in the sidebar</p>
+        </div>
+        
+        <div class="form-group">
+          <label for="profile-name">Full Name</label>
+          <input type="text" id="profile-name" class="form-control" placeholder="Efracia R. Ager">
+        </div>
+        
+        <div class="form-group">
+          <label for="profile-title">Job Title</label>
+          <input type="text" id="profile-title" class="form-control" placeholder="Freelance Graphics Designer">
+        </div>
+        
+        <div class="form-group">
+          <label for="profile-image-upload">Profile Image Upload</label>
+          <input type="file" id="profile-image-upload" class="form-control" accept="image/*" style="padding: 0.5rem;">
+          <small>Upload an image from your computer</small>
+          <div id="profile-image-preview" style="margin-top: 1rem;">
+            <img id="profile-image-preview-img" src="" class="image-preview" alt="Profile Preview" style="display: none; max-width: 200px;">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profile-email">Email</label>
+            <input type="email" id="profile-email" class="form-control" placeholder="efraciaager2@gmail.com">
+          </div>
+          <div class="form-group">
+            <label for="profile-phone">Phone</label>
+            <input type="tel" id="profile-phone" class="form-control" placeholder="+255 782 386 913">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="profile-location">Location</label>
+          <input type="text" id="profile-location" class="form-control" placeholder="Arusha, Tanzania">
+        </div>
+        
+        <div class="form-group">
+          <label>Social Links</label>
+          <div id="social-links-container">
+            <!-- Dynamic social links will be added here -->
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-social-link">
+            <i class="fas fa-plus"></i> Add Social Link
+          </button>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section id="about" class="admin-section">
+        <div class="section-header">
+          <h2><i class="fas fa-info-circle"></i> About Section</h2>
+          <p>Manage the about me content</p>
+        </div>
+        
+        <div class="form-group">
+          <label for="about-text-1">About Paragraph 1</label>
+          <textarea id="about-text-1" class="form-control" rows="4" placeholder="First paragraph of about section"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="about-text-2">About Paragraph 2</label>
+          <textarea id="about-text-2" class="form-control" rows="4" placeholder="Second paragraph of about section"></textarea>
+        </div>
+      </section>
+
+      <!-- Services Section -->
+      <section id="services" class="admin-section">
+        <div class="section-header">
+          <h2><i class="fas fa-briefcase"></i> Services</h2>
+          <p>Manage your services offered</p>
+        </div>
+        
+        <div id="services-container">
+          <!-- Dynamic services will be added here -->
+        </div>
+        
+        <button type="button" class="btn btn-secondary" id="add-service-btn">
+          <i class="fas fa-plus"></i> Add Service
+        </button>
+      </section>
+
+      <!-- Clients Section -->
+      <section id="clients" class="admin-section">
+        <div class="section-header">
+          <h2><i class="fas fa-building"></i> Clients</h2>
+          <p>Manage client logos</p>
+        </div>
+        
+        <div id="clients-container">
+          <!-- Dynamic clients will be added here -->
+        </div>
+        
+        <button type="button" class="btn btn-secondary" id="add-client-btn">
+          <i class="fas fa-plus"></i> Add Client Logo
+        </button>
+      </section>
+
+      <!-- Resume Section -->
+      <section id="resume" class="admin-section">
+        <div class="section-header">
+          <h2><i class="fas fa-file-alt"></i> Resume Management</h2>
+          <p>Manage your experience, education, and skills</p>
+        </div>
+        
+        <!-- Experience -->
+        <div class="subsection">
+          <h3><i class="fas fa-briefcase"></i> Experience</h3>
+          <div id="experience-container">
+            <!-- Dynamic experience items -->
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-experience-btn">
+            <i class="fas fa-plus"></i> Add Experience
+          </button>
+        </div>
+        
+        <!-- Education -->
+        <div class="subsection">
+          <h3><i class="fas fa-graduation-cap"></i> Education</h3>
+          <div id="education-container">
+            <!-- Dynamic education items -->
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-education-btn">
+            <i class="fas fa-plus"></i> Add Education
+          </button>
+        </div>
+        
+        <!-- Skills -->
+        <div class="subsection">
+          <h3><i class="fas fa-chart-bar"></i> Skills</h3>
+          <div id="skills-container">
+            <!-- Dynamic skills -->
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-skill-btn">
+            <i class="fas fa-plus"></i> Add Skill
+          </button>
+        </div>
+      </section>
+
+      <!-- Portfolio Section -->
+      <section id="portfolio" class="admin-section">
+        <div class="section-header">
+          <h2><i class="fas fa-images"></i> Portfolio</h2>
+          <p>Manage your portfolio projects</p>
+        </div>
+        
+        <div class="form-group">
+          <label>Portfolio Categories</label>
+          <div id="categories-container">
+            <!-- Dynamic categories -->
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-category-btn">
+            <i class="fas fa-plus"></i> Add Category
+          </button>
+        </div>
+        
+        <div id="portfolio-container">
+          <!-- Dynamic portfolio items -->
+        </div>
+        
+        <button type="button" class="btn btn-secondary" id="add-portfolio-btn">
+          <i class="fas fa-plus"></i> Add Portfolio Item
+        </button>
+      </section>
+
+      <!-- Contact Section -->
+      <section id="contact" class="admin-section">
+        <div class="section-header">
+          <h2><i class="fas fa-envelope"></i> Contact Section</h2>
+          <p>Manage contact information and map</p>
+        </div>
+        
+        <div class="form-group">
+          <label for="map-embed">Google Maps Embed URL</label>
+          <input type="text" id="map-embed" class="form-control" placeholder="Google Maps embed iframe src">
+          <small>Paste the src URL from Google Maps embed code</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="contact-email">Contact Email (for form submissions)</label>
+          <input type="email" id="contact-email" class="form-control" placeholder="efraciaager2@gmail.com">
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section id="settings" class="admin-section">
+        <div class="section-header">
+          <h2><i class="fas fa-cog"></i> Settings</h2>
+          <p>Website settings and configuration</p>
+        </div>
+        
+        <div class="form-group">
+          <label for="site-title">Site Title</label>
+          <input type="text" id="site-title" class="form-control" placeholder="Efracia R. Ager - Freelance Graphics Designer">
+        </div>
+        
+        <div class="form-group">
+          <label for="favicon-upload">Favicon Upload</label>
+          <input type="file" id="favicon-upload" class="form-control" accept="image/*" style="padding: 0.5rem;">
+          <small>Upload a favicon image from your computer (recommended: 32x32 or 64x64 px)</small>
+          <div id="favicon-preview" style="margin-top: 1rem;">
+            <img id="favicon-preview-img" src="" class="image-preview" alt="Favicon Preview" style="display: none; max-width: 64px;">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enable-contact-form"> Enable Contact Form
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <button type="button" class="btn btn-danger" id="export-data-btn">
+            <i class="fas fa-download"></i> Export Data
+          </button>
+          <button type="button" class="btn btn-secondary" id="import-data-btn">
+            <i class="fas fa-upload"></i> Import Data
+          </button>
+          <input type="file" id="import-file" accept=".json" style="display: none;">
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <span id="toast-message"></span>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../assets/js/admin.js"></script>
+</body>
+</html>
+
