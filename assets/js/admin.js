@@ -505,9 +505,10 @@ class AdminDashboard {
   createClientCard(client) {
     const div = document.createElement('div');
     div.className = 'item-card';
+    const headerTitle = client.alt || `Client Logo ${client.id}`;
     div.innerHTML = `
       <div class="item-card-header">
-        <h4>Client Logo ${client.id}</h4>
+        <h4>${headerTitle}</h4>
         <div class="item-card-actions">
           <button class="btn btn-danger btn-sm" onclick="admin.removeClient(${client.id})">
             <i class="fas fa-trash"></i>
@@ -522,11 +523,11 @@ class AdminDashboard {
         </div>
         <div class="form-group">
           <label>Preview</label>
-          <img src="${client.image}" class="image-preview" alt="Preview" onerror="this.style.display='none'">
+          <img src="${client.image || ''}" class="image-preview" alt="Preview" onerror="this.style.display='none'" style="${client.image ? '' : 'display: none;'}">
         </div>
         <div class="form-group">
           <label>Alt Text</label>
-          <input type="text" class="form-control" value="${client.alt}" oninput="admin.updateClient(${client.id}, 'alt', this.value)">
+          <input type="text" class="form-control" value="${client.alt || ''}" placeholder="Enter client logo alt text" oninput="admin.updateClient(${client.id}, 'alt', this.value)">
         </div>
       </div>
     `;
@@ -578,8 +579,8 @@ class AdminDashboard {
     const newId = Math.max(...this.data.clients.map(c => c.id), 0) + 1;
     this.data.clients.push({
       id: newId,
-      image: './assets/images/logo001.jpeg',
-      alt: `client logo ${newId}`
+      image: '',
+      alt: ''
     });
     this.loadClients();
     this.saveData();
@@ -899,9 +900,10 @@ class AdminDashboard {
   createPortfolioCard(item) {
     const div = document.createElement('div');
     div.className = 'item-card';
+    const headerTitle = item.title || `Portfolio Item ${item.id}`;
     div.innerHTML = `
       <div class="item-card-header">
-        <h4>${item.title}</h4>
+        <h4>${headerTitle}</h4>
         <div class="item-card-actions">
           <button class="btn btn-danger btn-sm" onclick="admin.removePortfolioItem(${item.id})">
             <i class="fas fa-trash"></i>
@@ -911,7 +913,7 @@ class AdminDashboard {
       <div class="item-card-body">
         <div class="form-group">
           <label>Title</label>
-          <input type="text" class="form-control" value="${item.title}" oninput="admin.updatePortfolioItem(${item.id}, 'title', this.value)">
+          <input type="text" class="form-control" value="${item.title || ''}" placeholder="Enter portfolio item title" oninput="admin.updatePortfolioItem(${item.id}, 'title', this.value)">
         </div>
         <div class="form-group">
           <label>Category</label>
@@ -928,7 +930,7 @@ class AdminDashboard {
         </div>
         <div class="form-group">
           <label>Preview</label>
-          <img src="${item.image}" class="image-preview" alt="Preview" onerror="this.style.display='none'">
+          <img src="${item.image || ''}" class="image-preview" alt="Preview" onerror="this.style.display='none'" style="${item.image ? '' : 'display: none;'}">
         </div>
       </div>
     `;
@@ -1015,9 +1017,9 @@ class AdminDashboard {
     const newId = Math.max(...this.data.portfolio.items.map(p => p.id), 0) + 1;
     this.data.portfolio.items.push({
       id: newId,
-      title: 'New Portfolio Item',
-      category: 'Others',
-      image: './assets/images/port-1.jpeg'
+      title: '',
+      category: this.data.portfolio.categories.length > 1 ? this.data.portfolio.categories[1] : 'Others',
+      image: ''
     });
     this.loadPortfolioItems();
     this.saveData();
