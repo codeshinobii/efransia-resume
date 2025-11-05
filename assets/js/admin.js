@@ -273,10 +273,23 @@ class AdminDashboard {
     const info = this.data.personalInfo;
     document.getElementById('profile-name').value = info.name;
     document.getElementById('profile-title').value = info.title;
-    document.getElementById('profile-image').value = info.image;
     document.getElementById('profile-email').value = info.email;
     document.getElementById('profile-phone').value = info.phone;
     document.getElementById('profile-location').value = info.location;
+
+    // Load profile image preview
+    const previewImg = document.getElementById('profile-image-preview-img');
+    if (info.image) {
+      previewImg.src = info.image;
+      previewImg.style.display = 'block';
+    } else {
+      previewImg.style.display = 'none';
+    }
+
+    // Handle profile image upload
+    const profileImageUpload = document.getElementById('profile-image-upload');
+    profileImageUpload.value = ''; // Reset file input
+    profileImageUpload.onchange = (e) => this.handleProfileImageUpload(e.target);
 
     // Load social links
     const container = document.getElementById('social-links-container');
@@ -286,9 +299,45 @@ class AdminDashboard {
     });
 
     // Add input listeners
-    ['profile-name', 'profile-title', 'profile-image', 'profile-email', 'profile-phone', 'profile-location'].forEach(id => {
+    ['profile-name', 'profile-title', 'profile-email', 'profile-phone', 'profile-location'].forEach(id => {
       document.getElementById(id).addEventListener('input', () => this.updatePersonalInfo());
     });
+  }
+
+  // Handle profile image upload
+  async handleProfileImageUpload(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Please select an image file', 'error');
+      return;
+    }
+
+    this.showToast('Uploading profile image...', 'info');
+
+    try {
+      const filePath = await this.saveImageFile(file, `profile-${Date.now()}-${file.name}`);
+      
+      if (filePath) {
+        this.data.personalInfo.image = filePath;
+        this.showToast('Profile image uploaded and saved!', 'success');
+      } else {
+        const base64 = await this.fileToBase64(file);
+        this.data.personalInfo.image = base64;
+        this.showToast('Profile image uploaded! (saved as base64)', 'success');
+      }
+      
+      this.saveData();
+      
+      // Update preview
+      const previewImg = document.getElementById('profile-image-preview-img');
+      previewImg.src = filePath || await this.fileToBase64(file);
+      previewImg.style.display = 'block';
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      this.showToast('Error uploading profile image', 'error');
+    }
   }
 
   createSocialLinkItem(link, index) {
@@ -340,7 +389,7 @@ class AdminDashboard {
     this.data.personalInfo = {
       name: document.getElementById('profile-name').value,
       title: document.getElementById('profile-title').value,
-      image: document.getElementById('profile-image').value,
+      image: this.data.personalInfo.image, // Keep existing image
       email: document.getElementById('profile-email').value,
       phone: document.getElementById('profile-phone').value,
       location: document.getElementById('profile-location').value,
@@ -1009,16 +1058,24 @@ class AdminDashboard {
   // Load Settings Section
   loadSettings() {
     document.getElementById('site-title').value = this.data.settings.siteTitle;
-    document.getElementById('favicon').value = this.data.settings.favicon;
     document.getElementById('enable-contact-form').checked = this.data.settings.enableContactForm;
+
+    // Load favicon preview
+    const faviconPreviewImg = document.getElementById('favicon-preview-img');
+    if (this.data.settings.favicon) {
+      faviconPreviewImg.src = this.data.settings.favicon;
+      faviconPreviewImg.style.display = 'block';
+    } else {
+      faviconPreviewImg.style.display = 'none';
+    }
+
+    // Handle favicon upload
+    const faviconUpload = document.getElementById('favicon-upload');
+    faviconUpload.value = ''; // Reset file input
+    faviconUpload.onchange = (e) => this.handleFaviconUpload(e.target);
 
     document.getElementById('site-title').addEventListener('input', () => {
       this.data.settings.siteTitle = document.getElementById('site-title').value;
-      this.saveData();
-    });
-
-    document.getElementById('favicon').addEventListener('input', () => {
-      this.data.settings.favicon = document.getElementById('favicon').value;
       this.saveData();
     });
 
@@ -1026,6 +1083,42 @@ class AdminDashboard {
       this.data.settings.enableContactForm = document.getElementById('enable-contact-form').checked;
       this.saveData();
     });
+  }
+
+  // Handle favicon upload
+  async handleFaviconUpload(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Please select an image file', 'error');
+      return;
+    }
+
+    this.showToast('Uploading favicon...', 'info');
+
+    try {
+      const filePath = await this.saveImageFile(file, `favicon-${Date.now()}-${file.name}`);
+      
+      if (filePath) {
+        this.data.settings.favicon = filePath;
+        this.showToast('Favicon uploaded and saved!', 'success');
+      } else {
+        const base64 = await this.fileToBase64(file);
+        this.data.settings.favicon = base64;
+        this.showToast('Favicon uploaded! (saved as base64)', 'success');
+      }
+      
+      this.saveData();
+      
+      // Update preview
+      const previewImg = document.getElementById('favicon-preview-img');
+      previewImg.src = filePath || await this.fileToBase64(file);
+      previewImg.style.display = 'block';
+    } catch (error) {
+      console.error('Error uploading favicon:', error);
+      this.showToast('Error uploading favicon', 'error');
+    }
   }
 
   // Save all changes
