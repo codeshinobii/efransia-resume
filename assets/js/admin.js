@@ -177,6 +177,7 @@ class AdminDashboard {
   // Save data to localStorage
   saveData() {
     localStorage.setItem('websiteData', JSON.stringify(this.data));
+    localStorage.setItem('websiteDataTimestamp', new Date().toISOString());
     
     // Dispatch custom event for same-window updates
     window.dispatchEvent(new CustomEvent('websiteDataUpdated'));
@@ -1128,25 +1129,91 @@ class AdminDashboard {
     this.showLoading();
     this.saveData(); // Always save to localStorage first
     
-    // Try to save via local server (writes to website-data.json) - optional
+    // Try to save via Vercel API (KV storage) - best for production
+    const savedViaAPI = await this.saveToVercelAPI();
+    
+    if (savedViaAPI) {
+      setTimeout(() => {
+        this.hideLoading();
+        this.showToast('✅ Changes saved! All visitors will see updates immediately!', 'success');
+      }, 500);
+      return;
+    }
+    
+    // Try to save via local server (for local development)
     const savedViaServer = await this.saveToLocalServer();
     
+    if (savedViaServer) {
+      setTimeout(() => {
+        this.hideLoading();
+        this.showToast('✅ All changes saved! File updated. Refresh website to see changes.', 'success');
+      }, 500);
+      return;
+    }
+    
+    // Fallback: Export file for manual deployment
+    this.exportDataToFile();
     setTimeout(() => {
       this.hideLoading();
-      if (savedViaServer) {
-        this.showToast('✅ All changes saved! File updated. Refresh website to see changes.', 'success');
-      } else {
-        // Just localStorage - works immediately!
-        this.showToast('✅ Changes saved! Refresh website (index.html) to see updates immediately!', 'success');
-      }
+      this.showToast('⚠️ Download website-data.json, commit to git, and push to deploy.', 'info');
     }, 500);
-    
-    // Don't download file if server is available or if we're using localStorage
-    if (!savedViaServer) {
-      // Only download if user explicitly wants a backup
-      // Commented out - user doesn't need to download anymore
-      // this.exportDataToFile();
+  }
+
+  // Save to Vercel API (uses GitHub API, Blob, or KV storage)
+  async saveToVercelAPI() {
+    try {
+      // Detect if we're on Vercel (production)
+      const isProduction = window.location.hostname !== 'localhost' && 
+                          window.location.hostname !== '127.0.0.1';
+      
+      if (!isProduction) {
+        // Not on Vercel, skip API save
+        return false;
+      }
+      
+      // Try GitHub API first (easiest, no database setup)
+      try {
+        const githubResponse = await fetch('/api/update-website-github', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(this.data)
+        });
+        
+        if (githubResponse.ok) {
+          const result = await githubResponse.json();
+          console.log('✅ Data saved via GitHub API:', result.message);
+          return true;
+        }
+      } catch (githubError) {
+        console.log('💡 GitHub API not available, trying Blob/KV...');
+      }
+      
+      // Try Blob/KV API
+      const response = await fetch('/api/update-website', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(this.data)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Data saved via Vercel API:', result.message);
+        
+        // If blob URL is returned, store it for website to use
+        if (result.url) {
+          sessionStorage.setItem('blobUrl', result.url);
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.log('💡 Vercel API not available:', error.message);
     }
+    return false;
   }
 
   // Save to local server (simpler workflow)

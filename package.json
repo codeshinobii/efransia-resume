@@ -1,0 +1,12 @@
+{
+  "name": "efransia-resume",
+  "version": "1.0.0",
+  "description": "Portfolio website with admin CMS",
+  "dependencies": {
+    "@vercel/blob": "^0.19.0"
+  },
+  "scripts": {
+    "dev": "node server.js"
+  }
+}
+

@@ -44,25 +44,87 @@ class WebsiteLoader {
 
   async loadData() {
     try {
-      // First, try to load from localStorage (always works, even with file://)
+      // First, try to load from Vercel API (Blob/KV storage) if on production
+      const isProduction = window.location.hostname !== 'localhost' && 
+                          window.location.hostname !== '127.0.0.1';
+      
+      if (isProduction) {
+        try {
+          // Check if there's a blob URL stored
+          const blobUrl = sessionStorage.getItem('blobUrl');
+          if (blobUrl) {
+            const blobResponse = await fetch(blobUrl);
+            if (blobResponse.ok) {
+              const blobData = await blobResponse.json();
+              if (blobData && blobData.personalInfo) {
+                console.log('✅ Loaded data from Vercel Blob');
+                this.data = blobData;
+                return;
+              }
+            }
+          }
+          
+          // Try KV API
+          const apiResponse = await fetch('/api/get-website');
+          if (apiResponse.ok) {
+            const apiData = await apiResponse.json();
+            if (apiData && apiData.personalInfo) {
+              console.log('✅ Loaded data from Vercel KV');
+              this.data = apiData;
+              return;
+            }
+          }
+        } catch (apiError) {
+          console.log('💡 API not available, using file fallback');
+        }
+      }
+      
+      // Load from website-data.json file (works everywhere)
+      const response = await fetch('./website-data.json?v=' + Date.now());
+      if (response.ok) {
+        const fileData = await response.json();
+        console.log('✅ Loaded data from website-data.json');
+        
+        // Check if localStorage data is newer (for local development only)
+        const savedData = localStorage.getItem('websiteData');
+        if (savedData) {
+          try {
+            const localData = JSON.parse(savedData);
+            const localTimestamp = localStorage.getItem('websiteDataTimestamp');
+            const fileTimestamp = response.headers.get('last-modified') || '0';
+            
+            // Only use localStorage if it's explicitly newer (for local dev)
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalhost && localTimestamp && new Date(localTimestamp) > new Date(fileTimestamp)) {
+              console.log('📱 Using localStorage data (local development)');
+              this.data = localData;
+              return;
+            }
+          } catch (e) {
+            // If localStorage parse fails, use file data
+          }
+        }
+        
+        // Use file data (production or if localStorage is older)
+        this.data = fileData;
+        // Update localStorage for faster future loads (but don't override on production)
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost) {
+          localStorage.setItem('websiteData', JSON.stringify(fileData));
+        }
+        return;
+      }
+      
+      // If file doesn't exist, try localStorage (fallback for local development)
+      console.warn('⚠️ website-data.json not found, trying localStorage...');
       const savedData = localStorage.getItem('websiteData');
       if (savedData) {
-        console.log('✅ Loaded data from localStorage');
+        console.log('✅ Loaded data from localStorage (fallback)');
         this.data = JSON.parse(savedData);
         return;
       }
       
-      // If no localStorage, try to load from website-data.json file
-      const response = await fetch('./website-data.json');
-      if (response.ok) {
-        const fileData = await response.json();
-        console.log('✅ Loaded data from website-data.json');
-        // Also save to localStorage for faster future loads
-        localStorage.setItem('websiteData', JSON.stringify(fileData));
-        this.data = fileData;
-      } else {
-        console.warn('⚠️ website-data.json not found, using default content');
-      }
+      console.warn('⚠️ No data found, using default content');
     } catch (error) {
       console.warn('⚠️ Could not load website-data.json:', error.message);
       // Last resort: try localStorage again
