@@ -469,11 +469,10 @@ class AdminDashboard {
         <div class="form-group">
           <label>Image Upload</label>
           <input type="file" class="form-control" accept="image/*" onchange="admin.handleClientImageUpload(${client.id}, this)" style="padding: 0.5rem;">
-          <small style="color: var(--light-gray-70); margin-top: 0.5rem; display: block;">Or enter image URL below</small>
+          <small style="color: var(--light-gray-70); margin-top: 0.5rem; display: block;">Upload an image from your computer</small>
         </div>
         <div class="form-group">
-          <label>Image URL</label>
-          <input type="text" class="form-control" value="${client.image}" oninput="admin.updateClient(${client.id}, 'image', this.value)" placeholder="./assets/images/logo001.jpeg">
+          <label>Preview</label>
           <img src="${client.image}" class="image-preview" alt="Preview" onerror="this.style.display='none'">
         </div>
         <div class="form-group">
@@ -876,11 +875,10 @@ class AdminDashboard {
         <div class="form-group">
           <label>Image Upload</label>
           <input type="file" class="form-control" accept="image/*" onchange="admin.handlePortfolioImageUpload(${item.id}, this)" style="padding: 0.5rem;">
-          <small style="color: var(--light-gray-70); margin-top: 0.5rem; display: block;">Or enter image URL below</small>
+          <small style="color: var(--light-gray-70); margin-top: 0.5rem; display: block;">Upload an image from your computer</small>
         </div>
         <div class="form-group">
-          <label>Image URL</label>
-          <input type="text" class="form-control" value="${item.image}" oninput="admin.updatePortfolioItem(${item.id}, 'image', this.value)" placeholder="./assets/images/port-1.jpeg">
+          <label>Preview</label>
           <img src="${item.image}" class="image-preview" alt="Preview" onerror="this.style.display='none'">
         </div>
       </div>
