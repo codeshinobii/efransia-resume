@@ -14,10 +14,28 @@ class WebsiteLoader {
 
   async init() {
     try {
-      // Load data from JSON file
+      // Load data from localStorage or JSON file
       await this.loadData();
       // Apply data to website
       this.applyData();
+      
+      // Listen for storage events (when admin saves changes in another tab/window)
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'websiteData') {
+          console.log('🔄 Data updated in admin, reloading...');
+          this.loadData().then(() => {
+            this.applyData();
+          });
+        }
+      });
+      
+      // Also listen for custom event (same window/tab)
+      window.addEventListener('websiteDataUpdated', () => {
+        console.log('🔄 Data updated, reloading...');
+        this.loadData().then(() => {
+          this.applyData();
+        });
+      });
     } catch (error) {
       console.error('Error loading website data:', error);
       // Fallback to default content if JSON fails to load
@@ -26,22 +44,31 @@ class WebsiteLoader {
 
   async loadData() {
     try {
-      // Try to load from website-data.json
-      const response = await fetch('./website-data.json');
-      if (response.ok) {
-        this.data = await response.json();
-      } else {
-        // If file doesn't exist, use localStorage as fallback
-        const savedData = localStorage.getItem('websiteData');
-        if (savedData) {
-          this.data = JSON.parse(savedData);
-        }
-      }
-    } catch (error) {
-      console.warn('Could not load website-data.json, using default content');
-      // Use localStorage as fallback
+      // First, try to load from localStorage (always works, even with file://)
       const savedData = localStorage.getItem('websiteData');
       if (savedData) {
+        console.log('✅ Loaded data from localStorage');
+        this.data = JSON.parse(savedData);
+        return;
+      }
+      
+      // If no localStorage, try to load from website-data.json file
+      const response = await fetch('./website-data.json');
+      if (response.ok) {
+        const fileData = await response.json();
+        console.log('✅ Loaded data from website-data.json');
+        // Also save to localStorage for faster future loads
+        localStorage.setItem('websiteData', JSON.stringify(fileData));
+        this.data = fileData;
+      } else {
+        console.warn('⚠️ website-data.json not found, using default content');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not load website-data.json:', error.message);
+      // Last resort: try localStorage again
+      const savedData = localStorage.getItem('websiteData');
+      if (savedData) {
+        console.log('✅ Loaded data from localStorage (fallback)');
         this.data = JSON.parse(savedData);
       }
     }

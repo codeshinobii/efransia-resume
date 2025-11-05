@@ -177,6 +177,9 @@ class AdminDashboard {
   // Save data to localStorage
   saveData() {
     localStorage.setItem('websiteData', JSON.stringify(this.data));
+    
+    // Dispatch custom event for same-window updates
+    window.dispatchEvent(new CustomEvent('websiteDataUpdated'));
   }
 
   // Setup navigation
@@ -901,20 +904,56 @@ class AdminDashboard {
   }
 
   // Save all changes
-  saveAllChanges() {
+  async saveAllChanges() {
     this.showLoading();
-    this.saveData();
+    this.saveData(); // Always save to localStorage first
     
-    // Export data automatically for sync script
-    this.exportDataToFile();
+    // Try to save via local server (writes to website-data.json) - optional
+    const savedViaServer = await this.saveToLocalServer();
     
     setTimeout(() => {
       this.hideLoading();
-      this.showToast('All changes saved successfully! Export website-data.json to sync with index.html', 'success');
-    }, 1000);
+      if (savedViaServer) {
+        this.showToast('✅ All changes saved! File updated. Refresh website to see changes.', 'success');
+      } else {
+        // Just localStorage - works immediately!
+        this.showToast('✅ Changes saved! Refresh website (index.html) to see updates immediately!', 'success');
+      }
+    }, 500);
+    
+    // Don't download file if server is available or if we're using localStorage
+    if (!savedViaServer) {
+      // Only download if user explicitly wants a backup
+      // Commented out - user doesn't need to download anymore
+      // this.exportDataToFile();
+    }
   }
 
-  // Export data to file for sync script
+  // Save to local server (simpler workflow)
+  async saveToLocalServer() {
+    try {
+      const response = await fetch('http://localhost:3001/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(this.data)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Data saved via local server:', result.message);
+        return true;
+      }
+    } catch (error) {
+      // Server not running - that's okay, will use file download
+      console.log('💡 Local server not running. Start it with: node server.js');
+      return false;
+    }
+    return false;
+  }
+
+  // Export data to file for sync script (fallback)
   exportDataToFile() {
     const dataStr = JSON.stringify(this.data, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -926,33 +965,6 @@ class AdminDashboard {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
-    // Also try to save via API (for Vercel deployment)
-    this.saveToAPI(dataStr).catch(err => {
-      console.log('API save failed, using file download:', err);
-    });
-  }
-
-  // Save to API (for Vercel serverless function)
-  async saveToAPI(dataStr) {
-    try {
-      const response = await fetch('/api/update-website', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: dataStr
-      });
-      
-      if (response.ok) {
-        console.log('Data saved via API successfully');
-        return true;
-      }
-    } catch (error) {
-      // API might not be available, that's okay
-      console.log('API not available, using file download method');
-    }
-    return false;
   }
 
   // Update website HTML file
